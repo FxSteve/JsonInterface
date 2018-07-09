@@ -29,7 +29,7 @@ namespace JsonInterface.Handlers
         {
             if (IsFaulted) throw FaultException;
 
-            return token == null ? nullValue : token.Value<T>();
+            return token == null ? nullValue : token.ToObject<T>();
         }
 
         public T GetPropertyValue(JObject jObject, string propertyName) =>

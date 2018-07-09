@@ -6,7 +6,6 @@ using JsonInterface;
 using JsonInterface.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
-using static JsonInterface.JsonInterfaceFactory;
 
 namespace JsonInterfaceTest
 {
@@ -23,7 +22,7 @@ namespace JsonInterfaceTest
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = FacadeFor<IListOfValuesDefinedInJsonTest>.Create(jsonObject);
+            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject);
 
             var result = tester.Values.Sum();
 
@@ -35,7 +34,7 @@ namespace JsonInterfaceTest
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = FacadeFor<IListOfValuesDefinedInJsonTest>.Create(jsonObject);
+            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject);
 
             tester.Values.RemoveAt(2); // number at index 2 is "3"
             tester.Values.Remove(5);
@@ -51,7 +50,7 @@ namespace JsonInterfaceTest
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = FacadeFor<IListOfValuesDefinedInJsonTest>.Create(jsonObject);
+            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject);
 
             var result = tester.Values.IndexOf(3);
 
@@ -70,7 +69,7 @@ namespace JsonInterfaceTest
         [TestMethod]
         public void ListOfListsOfListsTest()
         {
-            var tester = FacadeFor<IMyBaseList>.Create(JObject.Parse("{ \"version\": \"1.2.3.4\" }"));
+            var tester = JsonInterfaceFactory.Create<IMyBaseList>(JObject.Parse("{ \"version\": \"1.2.3.4\" }"));
 
             var baseList = tester.ReCurse;
 
@@ -80,10 +79,10 @@ namespace JsonInterfaceTest
             childList.Add(null);
 
             var grandchildList = childList.First().ReCurse;
-            grandchildList.Add(FacadeFor<IMyBaseList>.Create());
+            grandchildList.Add(JsonInterfaceFactory.Create<IMyBaseList>());
 
             var ggcl = grandchildList.First().ReCurse;
-            ggcl.Add(FacadeFor<IMyBaseList>.Create());
+            ggcl.Add(JsonInterfaceFactory.Create<IMyBaseList>());
 
             Assert.AreEqual("1.2.3.4", tester.Version);
             Assert.IsNull(ggcl.First().Version);
