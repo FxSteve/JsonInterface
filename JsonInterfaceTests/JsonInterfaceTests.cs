@@ -9,7 +9,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using static JsonInterface.JsonInterfaceFactory;
 
 namespace JsonInterfaceTest
 {
@@ -42,7 +41,7 @@ namespace JsonInterfaceTest
         {
             var jsonObject = JObject.Parse("{}");
 
-            var tester = FacadeFor<ITestInterface>.Create(jsonObject);
+            var tester = JsonInterfaceFactory.Create<ITestInterface>(jsonObject);
 
             tester.Name = "Morris";
 
@@ -57,7 +56,7 @@ namespace JsonInterfaceTest
             tester.Names.Add("Ho");
             tester.Names.Add("Go");
 
-            tester.Elements.Add(FacadeFor<ITestElement>.Create(v =>
+            tester.Elements.Add(JsonInterfaceFactory.Create<ITestElement>(v =>
            {
                v.Something = "some value";
                v.Value = 88;
@@ -142,7 +141,7 @@ namespace JsonInterfaceTest
 
             try
             {
-                var badType = FacadeFor<IHaveNonNullableValueTypes>.Create();
+                var badType = JsonInterfaceFactory.Create<IHaveNonNullableValueTypes>();
                 var badTypePropertyResult = badType.BadType;
             }
             catch (ArgumentException)
@@ -170,7 +169,7 @@ namespace JsonInterfaceTest
 
             try
             {
-                var badType = FacadeFor<IHaveDisallowedTypes>.Create();
+                var badType = JsonInterfaceFactory.Create<IHaveDisallowedTypes>();
                 var badTypePropertyResult = badType.PocoType;
             }
             catch (Exception ex) when (ex.Message.Contains(JsonInterfacePropertyInterceptor<object>.InterceptorFaultMessagePattern.Replace("{0}", "")))

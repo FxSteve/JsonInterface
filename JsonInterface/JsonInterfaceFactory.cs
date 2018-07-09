@@ -16,25 +16,31 @@ namespace JsonInterface
     {
         private static ProxyGenerator proxyGenerator = new ProxyGenerator();
 
-        public static class FacadeFor<T>
+        private static T GetDynamicProxy<T>(JObject jObject)
             where T : class, IJsonObject
         {
-            private static T GetDynamicProxy(JObject jObject)
-            {
-                var propertyInterceptor = new JsonInterfacePropertyInterceptor<T>(jObject);
-                var proxy = proxyGenerator.CreateInterfaceProxyWithoutTarget<T>(propertyInterceptor);
-                return proxy;
-            }
+            var propertyInterceptor = new JsonInterfacePropertyInterceptor<T>(jObject);
+            return proxyGenerator.CreateInterfaceProxyWithoutTarget<T>(propertyInterceptor);
+        }
 
-            public static T Create() => Create(new JObject());
-            public static T Create(Action<T> initializer)
-            {
-                var newValue = Create();
-                initializer(newValue);
-                return newValue;
-            }
+        public static T Create<T>(string json)
+            where T : class, IJsonObject => 
+            Create<T>(JObject.Parse(json));
 
-            public static T Create(JObject jObject) => GetDynamicProxy(jObject);
+        public static T Create<T>()
+            where T : class, IJsonObject => 
+            Create<T>(new JObject());
+
+        public static T Create<T>(JObject jObject)
+            where T : class, IJsonObject => 
+            GetDynamicProxy<T>(jObject);
+
+        public static T Create<T>(Action<T> initializer)
+            where T : class, IJsonObject
+        {
+            var newValue = Create<T>();
+            initializer(newValue);
+            return newValue;
         }
     }
 }
