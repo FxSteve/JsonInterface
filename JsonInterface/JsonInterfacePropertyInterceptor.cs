@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -34,9 +35,18 @@ namespace JsonInterface
 
         static JsonInterfacePropertyInterceptor()
         {
+            var type = typeof(T);
             try
             {
-                var properties = typeof(T).GetProperties();
+                var interfaceList = type
+                    .GetInterfaces()
+                    .Where(v => v != typeof(IJsonObject))
+                    .ToList();
+
+                interfaceList.Add(type);
+
+                var properties = interfaceList.SelectMany(v => v.GetProperties());
+
                 var contractResolver = new DefaultContractResolver();
 
                 foreach (var property in properties)
