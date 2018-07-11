@@ -75,7 +75,7 @@ namespace JsonInterface
 
         /// <summary>
         /// Returns true if type is a valid jsonInterface type
-        /// Type must be an IJsonList<>, IJsonObject, or a valid primitive type
+        /// Type must be an IJsonList&lt;&gt;, IJsonObject, or a valid primitive type
         /// </summary>
         /// <param name="type"></param>
         /// <param name="contractResolver"></param>
@@ -85,14 +85,11 @@ namespace JsonInterface
             (type.IsInterface && typeof(IJsonObject).IsAssignableFrom(type)) ||
             contractResolver.ResolveContract(type) is JsonPrimitiveContract;
 
-
-        private JObject _targetJObject { get; set; }
-
         public JsonInterfacePropertyInterceptor(JObject jObject)
         {
             if (IsFaulted) throw new Exception($"Fault creating facade object. \n{string.Join("\n", FaultMessages)}");
 
-            _targetJObject = jObject ?? throw new ArgumentNullException(nameof(jObject));
+         var   _targetJObject = jObject ?? throw new ArgumentNullException(nameof(jObject));
         }
 
         private static Func<JObject, object> GetGetterFunc(string propertyName, Type type)
@@ -134,15 +131,17 @@ namespace JsonInterface
 
         public void Intercept(IInvocation invocation)
         {
+            var targetJObject = (invocation.Proxy as JsonBase).JsonObject;
+
             if (Getters.TryGetValue(invocation.Method, out var getter))
             {
-                invocation.ReturnValue = getter(_targetJObject);
+                invocation.ReturnValue = getter(targetJObject);
                 return;
             }
 
             if (Setters.TryGetValue(invocation.Method, out var setter))
             {
-                setter(_targetJObject, invocation.Arguments[0]);
+                setter(targetJObject, invocation.Arguments[0]);
                 return;
             }
 
@@ -150,10 +149,11 @@ namespace JsonInterface
             switch (methodName)
             {
                 case "set_" + nameof(IJsonObject.JsonObject):
-                    _targetJObject = (JObject)invocation.Arguments[0];
+                    var value = (JObject)invocation.Arguments[0];
+                    (invocation.Proxy as JsonBase).JsonObject = value;
                     return;
                 case "get_" + nameof(IJsonObject.JsonObject):
-                    invocation.ReturnValue = _targetJObject;
+                    invocation.ReturnValue = targetJObject;
                     return;
             }
         }

@@ -6,10 +6,10 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface.Handlers
 {
-    public class ObjectTypeHandler<T> : IReadJsonTypeHandler<T> where T : class, IJsonObject
+    internal class ObjectTypeHandler<T> : IReadJsonTypeHandler<T> where T : class, IJsonObject
     {
         public T FromToken(JToken token) =>
-            JsonInterfaceFactory.Create<T>((JObject)token);
+            JsonInterfaceFactory.Create<T>(token.ToTokenTypeOrEmptyObject<JObject>());
 
         public T GetPropertyValue(JObject jObject, string propertyName) =>
             FromToken(jObject.ForceGetObjectPropertyToken(propertyName));

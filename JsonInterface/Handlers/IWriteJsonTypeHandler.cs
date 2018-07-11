@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface.Handlers
 {
-    public interface IWriteJsonTypeHandler<T>
+    internal interface IWriteJsonTypeHandler<T>
     {
         void SetPropertyValue(JObject jObject, string propertyName, T value);
 

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JsonInterface", "JsonInterf
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JsonInterfaceTests", "JsonInterfaceTests\JsonInterfaceTests.csproj", "{9704E86B-BFD3-4B0C-AA2D-396649B4ED7D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonInterfacePublicTests", "JsonInterfacePublicTests\JsonInterfacePublicTests.csproj", "{38C8DFE8-B222-48F7-96F5-D3DED33D4604}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{9704E86B-BFD3-4B0C-AA2D-396649B4ED7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9704E86B-BFD3-4B0C-AA2D-396649B4ED7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9704E86B-BFD3-4B0C-AA2D-396649B4ED7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38C8DFE8-B222-48F7-96F5-D3DED33D4604}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38C8DFE8-B222-48F7-96F5-D3DED33D4604}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38C8DFE8-B222-48F7-96F5-D3DED33D4604}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38C8DFE8-B222-48F7-96F5-D3DED33D4604}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

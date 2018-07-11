@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface.Handlers
 {
-    public class PrimitiveTypeHandler<T> : IReadJsonTypeHandler<T>, IWriteJsonTypeHandler<T>
+    internal class PrimitiveTypeHandler<T> : IReadJsonTypeHandler<T>, IWriteJsonTypeHandler<T>
     {
         private readonly T nullValue = default(T);
         private readonly static bool IsFaulted = false;

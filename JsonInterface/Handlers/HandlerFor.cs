@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface.Handlers
 {
-    public static class HandlerFor<T>
+    internal static class HandlerFor<T>
     {
         static HandlerFor()
         {

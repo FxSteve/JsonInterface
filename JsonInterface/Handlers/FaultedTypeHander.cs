@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface.Handlers
 {
-    public class FaultedTypeHander<T> : IReadJsonTypeHandler<T>, IWriteJsonTypeHandler<T>
+    internal class FaultedTypeHander<T> : IReadJsonTypeHandler<T>, IWriteJsonTypeHandler<T>
     {
         public class TypeHandlerFaultException : Exception
         {

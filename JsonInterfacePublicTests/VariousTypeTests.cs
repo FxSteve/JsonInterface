@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace JsonInterfaceTests
+namespace JsonInterface.PublicTests
 {
     [TestClass]
     public class VariousTypeTests

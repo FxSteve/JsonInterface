@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface
 {
-    public class JArrayListEnumerator<T> : IEnumerator<T>
+    internal class JArrayListEnumerator<T> : IEnumerator<T>
     {
         private readonly IEnumerator<JToken> _baseEnumerator;
         private readonly JArrayListWrapper<T> _arrayListWrapper;
