@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
-namespace JsonInterfaceTest
+namespace JsonInterface.Tests
 {
     [TestClass]
     public class JsonInterfaceTests
@@ -34,39 +34,6 @@ namespace JsonInterfaceTest
         {
             string Something { get; set; }
             int? Value { get; set; }
-        }
-
-        [TestMethod]
-        public void TestMethod1()
-        {
-            var jsonObject = JObject.Parse("{}");
-
-            var tester = JsonInterfaceFactory.Create<ITestInterface>(jsonObject);
-
-            tester.Name = "Morris";
-
-            Assert.AreEqual("Morris", tester.Name);
-
-            tester.Ages.Clear();
-            new[] { 5, 6, 7, 8 }
-                .ToList()
-                .ForEach(v => tester.Ages.Add(v));
-
-            tester.Names.Add("Yo");
-            tester.Names.Add("Ho");
-            tester.Names.Add("Go");
-
-            tester.Elements.Add(JsonInterfaceFactory.Create<ITestElement>(v =>
-           {
-               v.Something = "some value";
-               v.Value = 88;
-           }));
-
-            tester.ListOfElements.Add(null);
-            tester.ListOfElements.Add(null);
-
-            Assert.AreEqual(26, tester.Ages.Sum());
-            Debug.WriteLine(tester.JsonObject.ToString());
         }
 
         [TestMethod]
@@ -132,24 +99,6 @@ namespace JsonInterfaceTest
         public interface IHaveNonNullableValueTypes : IJsonObject
         {
             int BadType { get; set; }
-        }
-
-        [TestMethod]
-        public void InterfaceDisallowsNonNullableValueTypes()
-        {
-            var wasCaught = false;
-
-            try
-            {
-                var badType = JsonInterfaceFactory.Create<IHaveNonNullableValueTypes>();
-                var badTypePropertyResult = badType.BadType;
-            }
-            catch (ArgumentException)
-            {
-                wasCaught = true;
-            }
-
-            Assert.IsTrue(wasCaught);
         }
 
         public interface IHaveDisallowedTypes : IJsonObject

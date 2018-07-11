@@ -4,7 +4,7 @@ using System.Text;
 
 namespace JsonInterface.Extensions
 {
-    public static class StringExtensions
+    internal static class StringExtensions
     {
         public static string ToCamelCase(this string value) =>
             (value?.Length).GetValueOrDefault() > 1 ?

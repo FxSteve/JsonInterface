@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface.Handlers
 {
-    public class ArrayTypeHandler<T, V> : IReadJsonTypeHandler<T>
+    internal class ArrayTypeHandler<T, V> : IReadJsonTypeHandler<T>
         where T : class
     {
         readonly IReadJsonTypeHandler<V> _readJsonTypeHandler;
@@ -19,7 +19,7 @@ namespace JsonInterface.Handlers
         }
 
         public T FromToken(JToken token) =>
-           new JArrayListWrapper<V>((JArray)token, _readJsonTypeHandler, _writeJsonTypeHandler) as T;
+           new JArrayListWrapper<V>(token.ToTokenTypeOrEmptyObject<JArray>(), _readJsonTypeHandler, _writeJsonTypeHandler) as T;
 
         public JToken ToToken(T value) => (value as IJsonList)?.JsonArray ?? new JArray();
 

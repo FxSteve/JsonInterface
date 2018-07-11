@@ -8,10 +8,10 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface
 {
-    public class JArrayListWrapper<T> : IJsonList<T>
+    internal class JArrayListWrapper<T> : IJsonList<T>
     {
-        private readonly IReadJsonTypeHandler<T> _readJsonTypeHandler;
-        private readonly IWriteJsonTypeHandler<T> _writeJsonTypeHandler;
+        private readonly IReadJsonTypeHandler<T> _readJsonTypeHandler = HandlerFor<T>.ReadJsonTypeHandler;
+        private readonly IWriteJsonTypeHandler<T> _writeJsonTypeHandler = HandlerFor<T>.WriteJsonTypeHandler;
 
         public JArrayListWrapper(JArray jArray,
             IReadJsonTypeHandler<T> readJsonTypeHandler,
@@ -24,12 +24,18 @@ namespace JsonInterface
             JsonArray = jArray ?? throw new ArgumentNullException(nameof(jArray));
         }
 
+        public JArrayListWrapper(JArray jArray)
+        {
+            JsonArray = jArray;
+
+            var checkTypeResult = _readJsonTypeHandler.FromToken(JValue.CreateNull());
+        }
+
         public JArray JsonArray { get; set; }
 
         public T FromJToken(JToken jToken) => _readJsonTypeHandler.FromToken(jToken);
 
         public JToken ToJToken(T value) => _readJsonTypeHandler.ToToken(value);
-
 
         public T this[int index]
         {
@@ -101,5 +107,7 @@ namespace JsonInterface
             initializer(value);
             return value;
         }
+
+        public override string ToString() => JsonArray.ToString();
     }
 }
