@@ -89,7 +89,7 @@ namespace JsonInterface
         {
             if (IsFaulted) throw new Exception($"Fault creating facade object. \n{string.Join("\n", FaultMessages)}");
 
-         var   _targetJObject = jObject ?? throw new ArgumentNullException(nameof(jObject));
+            var _targetJObject = jObject ?? throw new ArgumentNullException(nameof(jObject));
         }
 
         private static Func<JObject, object> GetGetterFunc(string propertyName, Type type)
@@ -133,20 +133,32 @@ namespace JsonInterface
         {
             var targetJObject = (invocation.Proxy as JsonBase).JsonObject;
 
-            if (Getters.TryGetValue(invocation.Method, out var getter))
+            try
             {
-                invocation.ReturnValue = getter(targetJObject);
-                return;
+                if (Getters.TryGetValue(invocation.Method, out var getter))
+                {
+                    invocation.ReturnValue = getter(targetJObject);
+                    return;
+                }
+
+                if (Setters.TryGetValue(invocation.Method, out var setter))
+                {
+                    setter(targetJObject, invocation.Arguments[0]);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                var methodName = invocation.Method.Name;
+                if (methodName.IndexOf("_") == 3)
+                {
+                    methodName = methodName.Substring(4).ToCamelCase();
+                }
+
+                throw new JsonInterfaceException(ex.Message, targetJObject.Path + "." + methodName, ex);
             }
 
-            if (Setters.TryGetValue(invocation.Method, out var setter))
-            {
-                setter(targetJObject, invocation.Arguments[0]);
-                return;
-            }
-
-            var methodName = invocation.Method.Name;
-            switch (methodName)
+            switch (invocation.Method.Name)
             {
                 case "set_" + nameof(IJsonObject.JsonObject):
                     var value = (JObject)invocation.Arguments[0];
