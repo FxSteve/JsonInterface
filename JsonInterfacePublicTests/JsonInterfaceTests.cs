@@ -81,8 +81,33 @@ namespace JsonInterface.PublicTests
                 var badType = JsonInterfaceFactory.Create<IHaveNonNullableValueTypes>();
                 var badTypePropertyResult = badType.BadType;
             }
-            catch (ArgumentException)
+            catch (JsonInterfaceException)
             {
+                wasCaught = true;
+            }
+
+            Assert.IsTrue(wasCaught);
+        }
+
+        public interface IHasPath : IJsonObject
+        {
+            IHaveNonNullableValueTypes HaveNonNullableValueTypes { get; set; }
+            IHasPath Child { get; set; }
+        }
+
+        [TestMethod]
+        public void ExceptionIncludesPath()
+        {
+            var wasCaught = false;
+
+            try
+            {
+                var badType = JsonInterfaceFactory.Create<IHasPath>();
+                var badTypePropertyResult = badType.Child.Child.Child.HaveNonNullableValueTypes.BadType;
+            }
+            catch (JsonInterfaceException ex)
+            {
+                Assert.AreEqual("child.child.child.haveNonNullableValueTypes.badType", ex.TokenPath);
                 wasCaught = true;
             }
 
