@@ -48,8 +48,5 @@ namespace JsonInterface
 
             return settings;
         }
-
-        public static implicit operator JsonInterfaceSettings(JsonSerializerSettings serializerSettings) =>
-            new JsonInterfaceSettings { JsonSerializerSettings = serializerSettings };
     }
 }

@@ -21,8 +21,8 @@ namespace JsonInterface.Handlers
         public static IReadJsonTypeHandler<T> ReadJsonTypeHandler { get; } = _exceptionCatchingHandler;
         public static IWriteJsonTypeHandler<T> WriteJsonTypeHandler { get; } = _exceptionCatchingHandler;
 
-        public static T GetPropertyValue(JsonBase jsonBase, string propertyName, JsonInterfaceSettings settings) => ReadJsonTypeHandler.GetPropertyValue(jsonBase, propertyName, settings);
-        public static void SetPropertyValue(JsonBase jsonBase, string propertyName, T value, JsonInterfaceSettings settings) => WriteJsonTypeHandler.SetPropertyValue(jsonBase, propertyName, value, settings);
+        public static T GetPropertyValue(JsonBase jsonBase, string propertyName) => ReadJsonTypeHandler.GetPropertyValue(jsonBase, propertyName);
+        public static void SetPropertyValue(JsonBase jsonBase, string propertyName, T value) => WriteJsonTypeHandler.SetPropertyValue(jsonBase, propertyName, value);
 
     }
 }

@@ -32,7 +32,7 @@ namespace JsonInterface.PublicTests
                 MyProperty = guidString
             }, _jsonSettings);
 
-            var guidInterface = JsonInterfaceFactory.Create<IPropTestInterface<Guid?>>(guidJson, _jsonSettings);
+            var guidInterface = (new JsonInterfaceFactory(_jsonSettings)).Create<IPropTestInterface<Guid?>>(guidJson);
 
             Assert.AreEqual(new Guid(guidString), guidInterface.MyProperty);
         }
@@ -45,7 +45,7 @@ namespace JsonInterface.PublicTests
                 MyProperty = "anything"
             }, _jsonSettings);
 
-            var stringInterface = JsonInterfaceFactory.Create<IPropTestInterface<string>>(stringJson, _jsonSettings);
+            var stringInterface = (new JsonInterfaceFactory(_jsonSettings)).Create<IPropTestInterface<string>>(stringJson);
 
             var result = stringInterface.MyProperty;
             Assert.AreEqual("anything", result);
@@ -67,7 +67,7 @@ namespace JsonInterface.PublicTests
                 MyGuid = guidString
             }, _jsonSettings);
 
-            var inheritedInterface = JsonInterfaceFactory.Create<IInheritanceTest>(stringJson, _jsonSettings);
+            var inheritedInterface = (new JsonInterfaceFactory(_jsonSettings)).Create<IInheritanceTest>(stringJson);
 
             var result = inheritedInterface.MyProperty;
             var result2 = inheritedInterface.MyGuid;

@@ -9,7 +9,7 @@ namespace JsonInterface.Handlers
     {
         static readonly string NotSupportedErrorMessage = $"Writes are not supported for objects of type {typeof(T).Name}";
 
-        public void SetPropertyValue(JsonBase jsonBase, string propertyName, T value,JsonInterfaceSettings settings)
+        public void SetPropertyValue(JsonBase jsonBase, string propertyName, T value)
         {
             throw new NotImplementedException(NotSupportedErrorMessage);
         }

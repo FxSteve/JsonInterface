@@ -19,8 +19,10 @@ namespace JsonInterface.PublicTests
         {
             var j = new JObject();
 
-            var left = JsonInterfaceFactory.Create<IEqualityTest>(j);
-            var right = JsonInterfaceFactory.Create<IEqualityTest>(j);
+            var factory = new JsonInterfaceFactory();
+
+            var left = factory.Create<IEqualityTest>(j);
+            var right = factory.Create<IEqualityTest>(j);
 
             Assert.IsTrue(left.Equals(right));
             Assert.IsTrue(right.Equals(left));
@@ -29,12 +31,14 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void EqualIfJObjectComparedToProxy()
         {
+            var factory = new JsonInterfaceFactory();
+
             var jsonString = "{ \"prop\": 445 }";
             var leftJObject = JObject.Parse(jsonString);
             var rightJObject = JObject.Parse(jsonString);
 
-            var left = JsonInterfaceFactory.Create<IEqualityTest>(leftJObject);
-            var right = JsonInterfaceFactory.Create<IEqualityTest>(rightJObject);
+            var left = factory.Create<IEqualityTest>(leftJObject);
+            var right = factory.Create<IEqualityTest>(rightJObject);
 
             // proxies refer to different JObjects, so they are not equal
             Assert.IsFalse(right.Equals(left));

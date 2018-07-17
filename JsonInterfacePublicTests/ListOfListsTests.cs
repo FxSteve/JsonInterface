@@ -29,7 +29,7 @@ namespace JsonInterface.PublicTests
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject, _jsonSettings);
+            var tester = (new JsonInterfaceFactory(_jsonSettings)).Create<IListOfValuesDefinedInJsonTest>(jsonObject);
 
             var result = tester.Values.Sum();
 
@@ -41,7 +41,7 @@ namespace JsonInterface.PublicTests
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject, _jsonSettings);
+            var tester = (new JsonInterfaceFactory(_jsonSettings)).Create<IListOfValuesDefinedInJsonTest>(jsonObject);
 
             tester.Values.RemoveAt(2); // number at index 2 is "3"
             tester.Values.Remove(5);
@@ -57,7 +57,7 @@ namespace JsonInterface.PublicTests
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject, _jsonSettings);
+            var tester = (new JsonInterfaceFactory(_jsonSettings)).Create<IListOfValuesDefinedInJsonTest>(jsonObject);
 
             var result = tester.Values.IndexOf(3);
 
@@ -76,7 +76,7 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void ListOfListsOfListsTest()
         {
-            var tester = JsonInterfaceFactory.Create<IMyBaseList>(JObject.Parse("{ \"version\": \"1.2.3.4\" }"), _jsonSettings);
+            var tester = (new JsonInterfaceFactory(_jsonSettings)).Create<IMyBaseList>(JObject.Parse("{ \"version\": \"1.2.3.4\" }"));
 
             var baseList = tester.ReCurse;
 
@@ -86,10 +86,10 @@ namespace JsonInterface.PublicTests
             childList.Add(null);
 
             var grandchildList = childList.First().ReCurse;
-            grandchildList.Add(JsonInterfaceFactory.Create<IMyBaseList>());
+            grandchildList.Add((new JsonInterfaceFactory()).Create<IMyBaseList>());
 
             var ggcl = grandchildList.First().ReCurse;
-            ggcl.Add(JsonInterfaceFactory.Create<IMyBaseList>());
+            ggcl.Add((new JsonInterfaceFactory()).Create<IMyBaseList>());
 
             Assert.AreEqual("1.2.3.4", tester.Version);
             Assert.IsNull(ggcl.First().Version);
@@ -109,7 +109,7 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void ListSerializesCorrectlyTest()
         {
-            var myList = JsonInterfaceFactory.CreateList<int?>(v =>
+            var myList = (new JsonInterfaceFactory()).CreateList<int?>(v =>
             {
                 v.AddNew();
                 v.AddNew();
@@ -123,7 +123,7 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void ListForEachValueTest()
         {
-            var myList = JsonInterfaceFactory.CreateList<int?>(v =>
+            var myList = (new JsonInterfaceFactory()).CreateList<int?>(v =>
             {
                 v.AddNew();
                 v.AddNew();
@@ -140,7 +140,7 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void ListForEachObjectTest()
         {
-            var myList = JsonInterfaceFactory.CreateList<IMyBaseList>(v =>
+            var myList = (new JsonInterfaceFactory()).CreateList<IMyBaseList>(v =>
             {
                 v.AddNew();
                 v.AddNew();
@@ -157,7 +157,7 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void ListForEachListTest()
         {
-            var myList = JsonInterfaceFactory.CreateList<IJsonList<int?>>(v =>
+            var myList = (new JsonInterfaceFactory()).CreateList<IJsonList<int?>>(v =>
             {
                 v.AddNew();
                 v.AddNew();
@@ -184,7 +184,7 @@ namespace JsonInterface.PublicTests
                 " \"version\": \"string\", " +
                 " } ]";
 
-            var list = JsonInterfaceFactory.CreateList<IListItem>(json);
+            var list = (new JsonInterfaceFactory()).CreateList<IListItem>(json);
 
             foreach (var item in list)
             {
@@ -195,7 +195,7 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void ListAddNewTests()
         {
-            var myList = JsonInterfaceFactory.CreateList<int?>();
+            var myList = (new JsonInterfaceFactory()).CreateList<int?>();
 
             myList.AddNew();
             myList.Add(33);
@@ -210,7 +210,7 @@ namespace JsonInterface.PublicTests
             var wasCaught = false;
             try
             {
-                var mylist = JsonInterfaceFactory.CreateList<int>();
+                var mylist = (new JsonInterfaceFactory()).CreateList<int>();
             }
             catch (ArgumentException)
             {

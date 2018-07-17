@@ -9,19 +9,19 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface
 {
-    internal class JArrayListWrapper<T> : IJsonList<T>
+    internal class JsonArrayListWrapper<T> : IJsonList<T>
     {
         private readonly IReadJsonTypeHandler<T> _readJsonTypeHandler;
         private readonly IWriteJsonTypeHandler<T> _writeJsonTypeHandler;
-        private readonly JsonInterfaceSettings _settings;
+        private readonly JsonBase _jsonBase;
 
-        public JArrayListWrapper(JArray jArray, JsonInterfaceSettings settings)
+        public JsonArrayListWrapper(JArray jArray, JsonBase jsonBase)
         {
             JsonArray = jArray ?? throw new ArgumentNullException(nameof(JArray));
-            _settings = settings.DefaultIfNull();
+            _jsonBase = jsonBase ?? throw new ArgumentNullException(nameof(jsonBase));
 
-            _readJsonTypeHandler = HandlerFor<T>.GetReadJsonTypeHandler(_settings);
-            _writeJsonTypeHandler = HandlerFor<T>.GetWriteJsonTypeHandler(_settings);
+            _readJsonTypeHandler = HandlerFor<T>.GetReadJsonTypeHandler(jsonBase.JsonInterfaceSettings);
+            _writeJsonTypeHandler = HandlerFor<T>.GetWriteJsonTypeHandler(jsonBase.JsonInterfaceSettings);
 
             // fail if type is faulted 
             _readJsonTypeHandler.ThrowIfFaulted();
@@ -29,9 +29,9 @@ namespace JsonInterface
 
         public JArray JsonArray { get; set; }
 
-        public T FromJToken(JToken jToken) => _readJsonTypeHandler.FromToken(jToken, _settings);
+        public T FromJToken(JToken jToken) => _readJsonTypeHandler.FromToken(jToken, _jsonBase);
 
-        public JToken ToJToken(T value) => _readJsonTypeHandler.ToToken(value, _settings);
+        public JToken ToJToken(T value) => _readJsonTypeHandler.ToToken(value, _jsonBase);
 
         public T this[int index]
         {
@@ -69,7 +69,7 @@ namespace JsonInterface
 
         IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator();
 
-        private IEnumerator<T> CreateEnumerator() => new JArrayListEnumerator<T>(this, JsonArray.GetEnumerator());
+        private IEnumerator<T> CreateEnumerator() => new JsonArrayListWrapperEnumerator<T>(this, JsonArray.GetEnumerator());
 
         /// <summary>
         /// Returns true if both objects are the same json object
@@ -78,7 +78,7 @@ namespace JsonInterface
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            JArray otherObject = (obj as JArray) ?? (obj as JArrayListWrapper<T>)?.JsonArray;
+            JArray otherObject = (obj as JArray) ?? (obj as JsonArrayListWrapper<T>)?.JsonArray;
 
             return JsonArray.Equals(otherObject);
         }
@@ -93,7 +93,7 @@ namespace JsonInterface
         {
             var token = ToJToken(default(T));
             JsonArray.Add(token);
-            return _readJsonTypeHandler.FromToken(token, _settings);
+            return _readJsonTypeHandler.FromToken(token, _jsonBase);
         }
 
         public T AddNew(Action<T> initializer)

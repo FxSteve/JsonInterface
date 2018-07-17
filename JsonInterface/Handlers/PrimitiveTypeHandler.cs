@@ -27,20 +27,20 @@ namespace JsonInterface.Handlers
         public static bool IsFaulted { get; set; } = false;
         public void ThrowIfFaulted() { if (IsFaulted) throw FaultException; }
 
-        public T FromToken(JToken token, JsonInterfaceSettings settings)
+        public T FromToken(JToken token, JsonBase jsonBase)
         {
             if (IsFaulted) throw FaultException;
 
             return token == null ? nullValue : token.ToObject<T>();
         }
 
-        public T GetPropertyValue(JsonBase jsonBase, string propertyName, JsonInterfaceSettings settings) =>
-            FromToken(jsonBase.JsonObject[jsonBase.GetJsonPropertyNameFromPropertyName(propertyName)], settings);
+        public T GetPropertyValue(JsonBase jsonBase, string propertyName) =>
+            FromToken(jsonBase.JsonObject[jsonBase.GetJsonPropertyNameFromPropertyName(propertyName)], jsonBase);
 
-        public void SetPropertyValue(JsonBase jsonBase, string propertyName, T value, JsonInterfaceSettings settings) =>
+        public void SetPropertyValue(JsonBase jsonBase, string propertyName, T value) =>
             jsonBase.ForceGetValuePropertyToken(propertyName).Value = value;
 
-        public JToken ToToken(T value, JsonInterfaceSettings settings) =>
+        public JToken ToToken(T value, JsonBase jsonBase) =>
             new JValue(value);
     }
 }

@@ -8,14 +8,14 @@ namespace JsonInterface.Handlers
 {
     internal class ObjectTypeHandler<T> : IReadJsonTypeHandler<T> where T : class, IJsonObject
     {
-        public T FromToken(JToken token, JsonInterfaceSettings settings) =>
-            JsonInterfaceFactory.Create<T>(token.ToTokenTypeOrEmptyObject<JObject>(), settings);
+        public T FromToken(JToken token, JsonBase jsonBase) =>
+            jsonBase.Factory.Create<T>(token.ToTokenTypeOrEmptyObject<JObject>());
 
-        public T GetPropertyValue(JsonBase jsonBase, string propertyName, JsonInterfaceSettings settings) =>
-            FromToken(jsonBase.ForceGetObjectPropertyToken(propertyName), settings);
+        public T GetPropertyValue(JsonBase jsonBase, string propertyName) =>
+            FromToken(jsonBase.ForceGetObjectPropertyToken(propertyName), jsonBase);
 
         public void ThrowIfFaulted() { }
 
-        public JToken ToToken(T value, JsonInterfaceSettings settings) => value?.JsonObject ?? new JObject();
+        public JToken ToToken(T value, JsonBase jsonBase) => value?.JsonObject ?? new JObject();
     }
 }

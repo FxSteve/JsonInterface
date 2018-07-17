@@ -17,18 +17,18 @@ namespace JsonInterface
     {
         internal const string InterceptorFaultMessagePattern = "{0} is not a valid IJsonList<>, IJsonObject, or an acceptable Newtonsoft.Json Primitive type";
 
-        internal static readonly Dictionary<MethodInfo, Func<JsonBase, JsonInterfaceSettings, object>> Getters = new Dictionary<MethodInfo, Func<JsonBase, JsonInterfaceSettings, object>>();
-        private static readonly Dictionary<MethodInfo, Action<JsonBase, JsonInterfaceSettings, object>> Setters = new Dictionary<MethodInfo, Action<JsonBase, JsonInterfaceSettings, object>>();
+        internal static readonly Dictionary<MethodInfo, Func<JsonBase, object>> Getters = new Dictionary<MethodInfo, Func<JsonBase, object>>();
+        private static readonly Dictionary<MethodInfo, Action<JsonBase, object>> Setters = new Dictionary<MethodInfo, Action<JsonBase, object>>();
 
         private static bool IsFaulted = false;
         public static readonly List<string> FaultMessages = new List<string>();
 
-        private static void AddGetter(MethodInfo methodInfo, Func<JsonBase, JsonInterfaceSettings, object> getter)
+        private static void AddGetter(MethodInfo methodInfo, Func<JsonBase, object> getter)
         {
             if (methodInfo != null) Getters.Add(methodInfo, getter);
         }
 
-        private static void AddSetter(MethodInfo methodInfo, Action<JsonBase, JsonInterfaceSettings, object> setter)
+        private static void AddSetter(MethodInfo methodInfo, Action<JsonBase, object> setter)
         {
             if (methodInfo != null) Setters.Add(methodInfo, setter);
         }
@@ -85,7 +85,7 @@ namespace JsonInterface
             (type.IsInterface && typeof(IJsonObject).IsAssignableFrom(type)) ||
             contractResolver.ResolveContract(type) is JsonPrimitiveContract;
 
-        private static Func<JsonBase, JsonInterfaceSettings, object> GetGetterFunc(string propertyName, Type type)
+        private static Func<JsonBase, object> GetGetterFunc(string propertyName, Type type)
         {
             var genericTypeParameter = type;
 
@@ -95,21 +95,18 @@ namespace JsonInterface
 
             var propertyNameExpression = Expression.Constant(propertyName);
             var jsonBaseParameterExpression = Expression.Parameter(typeof(JsonBase));
-            var jsonInterfaceSettingsExpression = Expression.Parameter(typeof(JsonInterfaceSettings));
 
-            var expression = Expression.Lambda<Func<JsonBase, JsonInterfaceSettings, object>>(
+            var expression = Expression.Lambda<Func<JsonBase, object>>(
                 Expression.Convert(Expression.Call(null, method,
                     jsonBaseParameterExpression,
-                    propertyNameExpression,
-                    jsonInterfaceSettingsExpression), typeof(object)),
-                jsonBaseParameterExpression,
-                jsonInterfaceSettingsExpression);
+                    propertyNameExpression), typeof(object)),
+                jsonBaseParameterExpression);
 
             var result = expression.Compile();
             return result;
         }
 
-        private static Action<JsonBase, JsonInterfaceSettings, object> GetSetterFunc(string propertyName, Type type)
+        private static Action<JsonBase, object> GetSetterFunc(string propertyName, Type type)
         {
             var method = typeof(HandlerFor<>)
                 .MakeGenericType(type)
@@ -117,17 +114,14 @@ namespace JsonInterface
 
             var propertyNameExpression = Expression.Constant(propertyName);
             var jsonBaseParameterExpression = Expression.Parameter(typeof(JsonBase));
-            var jsonInterfaceSettingsExpression = Expression.Parameter(typeof(JsonInterfaceSettings));
             var valueExpression = Expression.Parameter(typeof(object));
 
-            var expression = Expression.Lambda<Action<JsonBase, JsonInterfaceSettings, object>>(
+            var expression = Expression.Lambda<Action<JsonBase, object>>(
                     Expression.Call(null, method,
                         jsonBaseParameterExpression,
                         propertyNameExpression,
-                        Expression.Convert(valueExpression, type),
-                        jsonInterfaceSettingsExpression),
+                        Expression.Convert(valueExpression, type)),
                     jsonBaseParameterExpression,
-                    jsonInterfaceSettingsExpression,
                     valueExpression
                     );
 
@@ -138,7 +132,10 @@ namespace JsonInterface
         {
             if (IsFaulted) throw new Exception($"Fault creating facade object. \n{string.Join("\n", FaultMessages)}");
 
-            var contract = (JsonObjectContract)settings.JsonSerializerSettings.ContractResolver.ResolveContract(typeof(T));
+            var contractResolver = settings.JsonSerializerSettings.ContractResolver ??
+                new DefaultContractResolver();
+
+            var contract = (JsonObjectContract)contractResolver.ResolveContract(typeof(T));
 
             ObjectPropertyNameToJsonPropertyName = contract.Properties.ToDictionary(v => v.UnderlyingName, v => v.PropertyName);
         }
@@ -153,13 +150,13 @@ namespace JsonInterface
             {
                 if (Getters.TryGetValue(invocation.Method, out var getter))
                 {
-                    invocation.ReturnValue = getter(jsonBase, jsonBase.JsonInterfaceSettings);
+                    invocation.ReturnValue = getter(jsonBase);
                     return;
                 }
 
                 if (Setters.TryGetValue(invocation.Method, out var setter))
                 {
-                    setter(jsonBase, jsonBase.JsonInterfaceSettings, invocation.Arguments[0]);
+                    setter(jsonBase, invocation.Arguments[0]);
                     return;
                 }
             }

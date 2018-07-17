@@ -6,12 +6,12 @@ using Newtonsoft.Json.Linq;
 
 namespace JsonInterface
 {
-    internal class JArrayListEnumerator<T> : IEnumerator<T>
+    internal class JsonArrayListWrapperEnumerator<T> : IEnumerator<T>
     {
         private readonly IEnumerator<JToken> _baseEnumerator;
-        private readonly JArrayListWrapper<T> _arrayListWrapper;
+        private readonly JsonArrayListWrapper<T> _arrayListWrapper;
 
-        public JArrayListEnumerator(JArrayListWrapper<T> arrayListWrapper, IEnumerator<JToken> enumerator)
+        public JsonArrayListWrapperEnumerator(JsonArrayListWrapper<T> arrayListWrapper, IEnumerator<JToken> enumerator)
         {
             _baseEnumerator = enumerator ?? throw new ArgumentNullException(nameof(enumerator));
             _arrayListWrapper = arrayListWrapper ?? throw new ArgumentNullException(nameof(arrayListWrapper));

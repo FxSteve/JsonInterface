@@ -39,9 +39,9 @@ namespace JsonInterface.Tests
         [TestMethod]
         public void ForceGetArrayPropertyTest()
         {
-            var jsonObject = JObject.Parse("{}");
+            var jsonBase = new JsonBase { JsonObject = JObject.Parse("{}") };
 
-            var result = jsonObject.ForceGetArrayPropertyToken("myArray");
+            var result = jsonBase.ForceGetArrayPropertyToken("myArray");
 
             Assert.IsTrue(result.Type == JTokenType.Array);
             result.Add(JToken.FromObject("Hi There"));
@@ -53,6 +53,8 @@ namespace JsonInterface.Tests
         [TestMethod]
         public void TestGenericStuff()
         {
+            var noCamelSerializerSettings = new JsonSerializerSettings();
+
             var myObject = new
             {
                 Age = (int?)27,
@@ -62,21 +64,21 @@ namespace JsonInterface.Tests
                 MyProfile = new { Address = "1234 Any Street" },
                 MyValues = new[] { new { Storms = "Norm" }, new { Storms = "Strange" } }
             };
-            var myJson = JsonConvert.SerializeObject(myObject, _serializerSettings);
+            var myJson = JsonConvert.SerializeObject(myObject, noCamelSerializerSettings);
 
-            var jObject = JObject.Parse(myJson);
+            var jsonBase = new JsonBase { JsonObject = JObject.Parse(myJson) };
 
-            var resultAge = new PrimitiveTypeHandler<int?>().GetPropertyValue(jObject, "Age");
-            var resultNull = new PrimitiveTypeHandler<int?>().GetPropertyValue(jObject, "AgeNull");
-            var nameResult = new PrimitiveTypeHandler<string>().GetPropertyValue(jObject, "Name");
-            var nameNullResult = new PrimitiveTypeHandler<string>().GetPropertyValue(jObject, "NameNull");
+            var resultAge = new PrimitiveTypeHandler<int?>().GetPropertyValue(jsonBase, "Age");
+            var resultNull = new PrimitiveTypeHandler<int?>().GetPropertyValue(jsonBase, "AgeNull");
+            var nameResult = new PrimitiveTypeHandler<string>().GetPropertyValue(jsonBase, "Name");
+            var nameNullResult = new PrimitiveTypeHandler<string>().GetPropertyValue(jsonBase, "NameNull");
 
             Assert.AreEqual(27, resultAge);
             Assert.AreEqual(null, resultNull);
             Assert.AreEqual("David", nameResult);
             Assert.AreEqual(null, nameNullResult);
 
-            var valueToken = jObject.ForceGetValuePropertyToken("Hokey");
+            var valueToken = jsonBase.ForceGetValuePropertyToken("Hokey");
             Assert.IsNotNull(valueToken);
             Assert.IsNull(valueToken.Value<string>());
         }
@@ -87,7 +89,7 @@ namespace JsonInterface.Tests
             var wasCaught = false;
             try
             {
-                new PrimitiveTypeHandler<int>().FromToken(null);
+                new PrimitiveTypeHandler<int>().FromToken(null, null);
             }
             catch (ArgumentException)
             {
@@ -118,7 +120,7 @@ namespace JsonInterface.Tests
 
             try
             {
-                var badType = JsonInterfaceFactory.Create<IHaveDisallowedTypes>();
+                var badType = (new JsonInterfaceFactory()).Create<IHaveDisallowedTypes>();
                 var badTypePropertyResult = badType.PocoType;
             }
             catch (Exception ex) when (ex.Message.Contains(JsonInterfacePropertyInterceptor<object>.InterceptorFaultMessagePattern.Replace("{0}", "")))
@@ -142,23 +144,22 @@ namespace JsonInterface.Tests
                 MyValues = new[] { new { Storms = "Norm" }, new { Storms = "Strange" } }
             };
 
-            var myJson = JsonConvert.SerializeObject(myObject, _serializerSettings);
-
-            var jObject = JObject.Parse(myJson);
+            var myJson = JsonConvert.SerializeObject(myObject);
+            var jsonBase = new JsonBase { JsonObject = JObject.Parse(myJson) };
 
             var stringTypeHandler = new PrimitiveTypeHandler<string>();
 
-            var nameValue = stringTypeHandler.GetPropertyValue(jObject, nameof(myObject.Name));
-            var nameNullValue = stringTypeHandler.GetPropertyValue(jObject, nameof(myObject.NameNull));
+            var nameValue = stringTypeHandler.GetPropertyValue(jsonBase, nameof(myObject.Name));
+            var nameNullValue = stringTypeHandler.GetPropertyValue(jsonBase, nameof(myObject.NameNull));
 
             Assert.AreEqual("David", nameValue);
             Assert.AreEqual(null, nameNullValue);
 
-            stringTypeHandler.SetPropertyValue(jObject, nameof(myObject.Name), "Seth");
-            stringTypeHandler.SetPropertyValue(jObject, nameof(myObject.NameNull), "SethNotNull");
+            stringTypeHandler.SetPropertyValue(jsonBase, jsonBase.GetJsonPropertyNameFromPropertyName(nameof(myObject.Name)), "Seth");
+            stringTypeHandler.SetPropertyValue(jsonBase, jsonBase.GetJsonPropertyNameFromPropertyName(nameof(myObject.NameNull)), "SethNotNull");
 
-            nameValue = stringTypeHandler.GetPropertyValue(jObject, nameof(myObject.Name));
-            nameNullValue = stringTypeHandler.GetPropertyValue(jObject, nameof(myObject.NameNull));
+            nameValue = stringTypeHandler.GetPropertyValue(jsonBase, jsonBase.GetJsonPropertyNameFromPropertyName(nameof(myObject.Name)));
+            nameNullValue = stringTypeHandler.GetPropertyValue(jsonBase, jsonBase.GetJsonPropertyNameFromPropertyName(nameof(myObject.NameNull)));
 
             Assert.AreEqual("Seth", nameValue);
             Assert.AreEqual("SethNotNull", nameNullValue);
@@ -179,12 +180,8 @@ namespace JsonInterface.Tests
 
             var myJson = JsonConvert.SerializeObject(myObject, _serializerSettings);
 
-            var jObject = JObject.Parse(myJson);
-
-            var objectTypeHandler = new ObjectTypeHandler<IMyObject>();
-            var profileObjectTypeHandler = new ObjectTypeHandler<IAddress>();
-
-            var profile = profileObjectTypeHandler.GetPropertyValue(jObject, nameof(myObject.MyProfile));
+            var obj = (new JsonInterfaceFactory(_serializerSettings)).Create<IMyObject>(myJson);
+            var profile = obj.MyProfile;
 
             Assert.AreEqual("1234 Any Street", profile.Address);
         }

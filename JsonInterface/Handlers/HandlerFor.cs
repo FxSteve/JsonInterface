@@ -68,10 +68,10 @@ namespace JsonInterface.Handlers
         public static IWriteJsonTypeHandler<T> GetWriteJsonTypeHandler(JsonInterfaceSettings settings) =>
             settings.TrapExceptions ? _exceptionCatchingHandler : _writeJsonTypeHandler;
 
-        public static T GetPropertyValue(JsonBase jsonBase, string propertyName, JsonInterfaceSettings settings) =>
-            GetReadJsonTypeHandler(settings).GetPropertyValue(jsonBase, propertyName, settings);
+        public static T GetPropertyValue(JsonBase jsonBase, string propertyName) =>
+            GetReadJsonTypeHandler(jsonBase.JsonInterfaceSettings).GetPropertyValue(jsonBase, propertyName);
 
-        public static void SetPropertyValue(JsonBase jsonBase, string propertyName, T value, JsonInterfaceSettings settings) =>
-            GetWriteJsonTypeHandler(settings).SetPropertyValue(jsonBase, propertyName, value, settings);
+        public static void SetPropertyValue(JsonBase jsonBase, string propertyName, T value) =>
+            GetWriteJsonTypeHandler(jsonBase.JsonInterfaceSettings).SetPropertyValue(jsonBase, propertyName, value);
     }
 }

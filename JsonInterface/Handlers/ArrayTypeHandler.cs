@@ -9,13 +9,13 @@ namespace JsonInterface.Handlers
     internal class ArrayTypeHandler<T, V> : IReadJsonTypeHandler<T>
         where T : class
     {
-        public T FromToken(JToken token, JsonInterfaceSettings settings) =>
-           new JArrayListWrapper<V>(token.ToTokenTypeOrEmptyObject<JArray>(), settings) as T;
+        public T FromToken(JToken token, JsonBase jsonBase) =>
+           new JsonArrayListWrapper<V>(token.ToTokenTypeOrEmptyObject<JArray>(), jsonBase) as T;
 
-        public JToken ToToken(T value, JsonInterfaceSettings settings) => (value as IJsonList)?.JsonArray ?? new JArray();
+        public JToken ToToken(T value, JsonBase jsonBase) => (value as IJsonList)?.JsonArray ?? new JArray();
 
-        public T GetPropertyValue(JsonBase jsonBase, string propertyName, JsonInterfaceSettings settings) =>
-            FromToken(jsonBase.ForceGetArrayPropertyToken(propertyName), settings);
+        public T GetPropertyValue(JsonBase jsonBase, string propertyName) =>
+            FromToken(jsonBase.ForceGetArrayPropertyToken(propertyName), jsonBase);
 
         public void ThrowIfFaulted() { }
     }
