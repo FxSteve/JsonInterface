@@ -5,13 +5,20 @@ using System.Linq;
 using JsonInterface;
 using JsonInterface.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace JsonInterface.PublicTests
 {
     [TestClass]
     public class ListOfListsTests
     {
+        static readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
+
         public interface IListOfValuesDefinedInJsonTest : IJsonObject
         {
             IJsonList<Int32?> Values { get; }
@@ -22,7 +29,7 @@ namespace JsonInterface.PublicTests
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject);
+            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject, _jsonSettings);
 
             var result = tester.Values.Sum();
 
@@ -34,7 +41,7 @@ namespace JsonInterface.PublicTests
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject);
+            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject, _jsonSettings);
 
             tester.Values.RemoveAt(2); // number at index 2 is "3"
             tester.Values.Remove(5);
@@ -50,7 +57,7 @@ namespace JsonInterface.PublicTests
         {
             var jsonObject = JObject.Parse("{\"values\": [1,2,3,4,5]}");
 
-            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject);
+            var tester = JsonInterfaceFactory.Create<IListOfValuesDefinedInJsonTest>(jsonObject, _jsonSettings);
 
             var result = tester.Values.IndexOf(3);
 
@@ -69,7 +76,7 @@ namespace JsonInterface.PublicTests
         [TestMethod]
         public void ListOfListsOfListsTest()
         {
-            var tester = JsonInterfaceFactory.Create<IMyBaseList>(JObject.Parse("{ \"version\": \"1.2.3.4\" }"));
+            var tester = JsonInterfaceFactory.Create<IMyBaseList>(JObject.Parse("{ \"version\": \"1.2.3.4\" }"), _jsonSettings);
 
             var baseList = tester.ReCurse;
 
@@ -114,6 +121,90 @@ namespace JsonInterface.PublicTests
         }
 
         [TestMethod]
+        public void ListForEachValueTest()
+        {
+            var myList = JsonInterfaceFactory.CreateList<int?>(v =>
+            {
+                v.AddNew();
+                v.AddNew();
+                v.Add(null);
+                v.Add(null);
+            });
+
+            foreach (var item in myList)
+            {
+                Assert.IsNull(item, $"List of int? should successfully return null for items in {nameof(ListForEachValueTest)}");
+            }
+        }
+
+        [TestMethod]
+        public void ListForEachObjectTest()
+        {
+            var myList = JsonInterfaceFactory.CreateList<IMyBaseList>(v =>
+            {
+                v.AddNew();
+                v.AddNew();
+                v.Add(null);
+                v.Add(null);
+            });
+
+            foreach (var item in myList)
+            {
+                Assert.IsInstanceOfType(item, typeof(IMyBaseList), $"List of object should successfully return null for items in {nameof(ListForEachObjectTest)}");
+            }
+        }
+
+        [TestMethod]
+        public void ListForEachListTest()
+        {
+            var myList = JsonInterfaceFactory.CreateList<IJsonList<int?>>(v =>
+            {
+                v.AddNew();
+                v.AddNew();
+                v.Add(null);
+                v.Add(null);
+            });
+
+            foreach (var item in myList)
+            {
+                Assert.IsInstanceOfType(item, typeof(IJsonList<int?>), $"List of int? should successfully return null for items in {nameof(ListForEachListTest)}");
+            }
+        }
+
+        public interface IListItem : IJsonObject
+        {
+            Guid? Id { get; set; }
+            string Version { get; set; }
+        }
+
+        [TestMethod]
+        public void ParseListTest()
+        {
+            var json = "[{ \"id\": \"6f2572e3-faed-437a-b465-86ec126a9001\", " +
+                " \"version\": \"string\", " +
+                " } ]";
+
+            var list = JsonInterfaceFactory.CreateList<IListItem>(json);
+
+            foreach (var item in list)
+            {
+                Assert.IsInstanceOfType(item, typeof(IListItem));
+            }
+        }
+
+        [TestMethod]
+        public void ListAddNewTests()
+        {
+            var myList = JsonInterfaceFactory.CreateList<int?>();
+
+            myList.AddNew();
+            myList.Add(33);
+
+            Assert.AreEqual(1, myList.Count(v => v == null));
+            Assert.AreEqual(1, myList.Count(v => v == 33));
+        }
+
+        [TestMethod]
         public void ListFailsForBadTypes()
         {
             var wasCaught = false;
@@ -121,7 +212,7 @@ namespace JsonInterface.PublicTests
             {
                 var mylist = JsonInterfaceFactory.CreateList<int>();
             }
-            catch (ArgumentException) 
+            catch (ArgumentException)
             {
                 wasCaught = true;
             }

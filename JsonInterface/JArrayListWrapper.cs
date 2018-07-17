@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using JsonInterface.Extensions;
 using JsonInterface.Handlers;
 using Newtonsoft.Json.Linq;
 
@@ -10,32 +11,27 @@ namespace JsonInterface
 {
     internal class JArrayListWrapper<T> : IJsonList<T>
     {
-        private readonly IReadJsonTypeHandler<T> _readJsonTypeHandler = HandlerFor<T>.ReadJsonTypeHandler;
-        private readonly IWriteJsonTypeHandler<T> _writeJsonTypeHandler = HandlerFor<T>.WriteJsonTypeHandler;
+        private readonly IReadJsonTypeHandler<T> _readJsonTypeHandler;
+        private readonly IWriteJsonTypeHandler<T> _writeJsonTypeHandler;
+        private readonly JsonInterfaceSettings _settings;
 
-        public JArrayListWrapper(JArray jArray,
-            IReadJsonTypeHandler<T> readJsonTypeHandler,
-            IWriteJsonTypeHandler<T> writeJsonTypeHandler
-            )
+        public JArrayListWrapper(JArray jArray, JsonInterfaceSettings settings)
         {
-            _readJsonTypeHandler = readJsonTypeHandler ?? throw new ArgumentNullException(nameof(readJsonTypeHandler));
-            _writeJsonTypeHandler = writeJsonTypeHandler ?? new WritingNotSupportedTypeHandler<T>();
+            JsonArray = jArray ?? throw new ArgumentNullException(nameof(JArray));
+            _settings = settings.DefaultIfNull();
 
-            JsonArray = jArray ?? throw new ArgumentNullException(nameof(jArray));
-        }
+            _readJsonTypeHandler = HandlerFor<T>.GetReadJsonTypeHandler(_settings);
+            _writeJsonTypeHandler = HandlerFor<T>.GetWriteJsonTypeHandler(_settings);
 
-        public JArrayListWrapper(JArray jArray)
-        {
-            JsonArray = jArray;
-
-            var checkTypeResult = _readJsonTypeHandler.FromToken(JValue.CreateNull());
+            // fail if type is faulted 
+            _readJsonTypeHandler.ThrowIfFaulted();
         }
 
         public JArray JsonArray { get; set; }
 
-        public T FromJToken(JToken jToken) => _readJsonTypeHandler.FromToken(jToken);
+        public T FromJToken(JToken jToken) => _readJsonTypeHandler.FromToken(jToken, _settings);
 
-        public JToken ToJToken(T value) => _readJsonTypeHandler.ToToken(value);
+        public JToken ToJToken(T value) => _readJsonTypeHandler.ToToken(value, _settings);
 
         public T this[int index]
         {
@@ -82,10 +78,9 @@ namespace JsonInterface
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            var listObj = obj as JArrayListWrapper<T>;
-            var jArrayObj = obj as JArray;
+            JArray otherObject = (obj as JArray) ?? (obj as JArrayListWrapper<T>)?.JsonArray;
 
-            return JsonArray.Equals(listObj?.JsonArray) || JsonArray.Equals(jArrayObj);
+            return JsonArray.Equals(otherObject);
         }
 
         /// <summary>
@@ -98,7 +93,7 @@ namespace JsonInterface
         {
             var token = ToJToken(default(T));
             JsonArray.Add(token);
-            return _readJsonTypeHandler.FromToken(token);
+            return _readJsonTypeHandler.FromToken(token, _settings);
         }
 
         public T AddNew(Action<T> initializer)

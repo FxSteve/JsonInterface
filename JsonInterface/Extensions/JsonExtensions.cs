@@ -18,59 +18,64 @@ namespace JsonInterface.Extensions
             where T : JToken, new() =>
             token.Type == JTokenType.Null ? new T() : (T)token;
 
-        internal static JArray ForceGetArrayPropertyToken(this JObject jObject, string propertyName)
+        internal static JArray ForceGetArrayPropertyToken(this JsonBase jsonBase, string propertyName)
         {
-            propertyName = propertyName.ToCamelCase();
+           var jsonPropertyName = jsonBase.GetJsonPropertyNameFromPropertyName(propertyName);
 
-            if (jObject[propertyName].IsNullOrEmpty())
+            var jObject = jsonBase.JsonObject;
+
+            if (jObject[jsonPropertyName].IsNullOrEmpty())
             {
-                jObject[propertyName] = new JArray();
+                jObject[jsonPropertyName] = new JArray();
             }
 
-            var propertyValueToken = jObject[propertyName];
+            var propertyValueToken = jObject[jsonPropertyName];
 
             if (!(propertyValueToken.Type == JTokenType.Array))
             {
-                throw new ArgumentException($"{propertyName} must be an array");
+                throw new ArgumentException($"{jsonPropertyName} must be an array");
             }
 
             return (JArray)propertyValueToken;
         }
 
-
-        internal static JObject ForceGetObjectPropertyToken(this JObject jObject, string propertyName)
+        internal static JObject ForceGetObjectPropertyToken(this JsonBase jsonBase, string propertyName)
         {
-            propertyName = propertyName.ToCamelCase();
+          var  jsonPropertyName = jsonBase.GetJsonPropertyNameFromPropertyName(propertyName);
 
-            if (jObject[propertyName].IsNullOrEmpty())
+            var jObject = jsonBase.JsonObject;
+
+            if (jObject[jsonPropertyName].IsNullOrEmpty())
             {
-                jObject[propertyName] = new JObject();
+                jObject[jsonPropertyName] = new JObject();
             }
 
-            var propertyValueToken = jObject[propertyName];
+            var propertyValueToken = jObject[jsonPropertyName];
 
             if (!(propertyValueToken.Type == JTokenType.Object))
             {
-                throw new ArgumentException($"{propertyName} must be an object.");
+                throw new ArgumentException($"{jsonPropertyName} must be an object.");
             }
 
             return (JObject)propertyValueToken;
         }
 
-        internal static JValue ForceGetValuePropertyToken(this JObject jObject, string propertyName)
+        internal static JValue ForceGetValuePropertyToken(this JsonBase jsonBase, string propertyName)
         {
-            propertyName = propertyName.ToCamelCase();
+            var jsonPropertyName = jsonBase.GetJsonPropertyNameFromPropertyName(propertyName);
 
-            if (jObject[propertyName].IsNullOrEmpty())
+            var jObject = jsonBase.JsonObject;
+
+            if (jObject[jsonPropertyName].IsNullOrEmpty())
             {
-                jObject[propertyName] = (JValue)null;
+                jObject[jsonPropertyName] = JValue.CreateNull();
             }
 
-            var propertyValueToken = jObject[propertyName];
+            var propertyValueToken = jObject[jsonPropertyName];
 
             if (propertyValueToken.Type == JTokenType.Array || propertyValueToken.Type == JTokenType.Object)
             {
-                throw new ArgumentException($"{propertyName} must be an primitive property.");
+                throw new ArgumentException($"{jsonPropertyName} must be an primitive property.");
             }
 
             return (JValue)propertyValueToken;

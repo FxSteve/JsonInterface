@@ -1,9 +1,11 @@
 ﻿using JsonInterface;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace JsonInterface.PublicTests
@@ -30,7 +32,7 @@ namespace JsonInterface.PublicTests
                 MyProperty = guidString
             }, _jsonSettings);
 
-            var guidInterface = JsonInterfaceFactory.Create<IPropTestInterface<Guid?>>(guidJson);
+            var guidInterface = JsonInterfaceFactory.Create<IPropTestInterface<Guid?>>(guidJson, _jsonSettings);
 
             Assert.AreEqual(new Guid(guidString), guidInterface.MyProperty);
         }
@@ -43,7 +45,7 @@ namespace JsonInterface.PublicTests
                 MyProperty = "anything"
             }, _jsonSettings);
 
-            var stringInterface = JsonInterfaceFactory.Create<IPropTestInterface<string>>(stringJson);
+            var stringInterface = JsonInterfaceFactory.Create<IPropTestInterface<string>>(stringJson, _jsonSettings);
 
             var result = stringInterface.MyProperty;
             Assert.AreEqual("anything", result);
@@ -65,13 +67,40 @@ namespace JsonInterface.PublicTests
                 MyGuid = guidString
             }, _jsonSettings);
 
-            var inheritedInterface = JsonInterfaceFactory.Create<IInheritanceTest>(stringJson);
+            var inheritedInterface = JsonInterfaceFactory.Create<IInheritanceTest>(stringJson, _jsonSettings);
 
             var result = inheritedInterface.MyProperty;
             var result2 = inheritedInterface.MyGuid;
 
             Assert.AreEqual("anything", result);
             Assert.AreEqual(new Guid(guidString), result2);
+        }
+
+        public interface IMyType : IJsonObject
+        {
+            int? Id { get; set; }
+            Guid? Id2 { get; set; }
+            string Name { get; set; }
+        }
+
+        [TestMethod]
+        public void SettingsTest()
+        {
+            var settings = new JsonInterfaceSettings().JsonSerializerSettings;
+            settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            var serializer = JsonSerializer.Create(settings);
+
+            var contract = serializer.ContractResolver.ResolveContract(typeof(IMyType));
+            var contract2 = serializer.ContractResolver.ResolveContract(typeof(List<int>));
+
+            var properties = ((JsonObjectContract)contract).Properties;
+
+            var myProperties = properties
+                .Select(v => new { v.PropertyName, v.UnderlyingName })
+                .ToDictionary(v => v.UnderlyingName, v => v.PropertyName);
+
+            var reverseDictionary = myProperties.ToDictionary(v => v.Value, v => v.Key);
+
         }
     }
 }

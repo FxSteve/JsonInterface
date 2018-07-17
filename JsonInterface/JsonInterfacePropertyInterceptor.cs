@@ -17,18 +17,18 @@ namespace JsonInterface
     {
         internal const string InterceptorFaultMessagePattern = "{0} is not a valid IJsonList<>, IJsonObject, or an acceptable Newtonsoft.Json Primitive type";
 
-        internal static readonly Dictionary<MethodInfo, Func<JObject, object>> Getters = new Dictionary<MethodInfo, Func<JObject, object>>();
-        private static readonly Dictionary<MethodInfo, Action<JObject, object>> Setters = new Dictionary<MethodInfo, Action<JObject, object>>();
+        internal static readonly Dictionary<MethodInfo, Func<JsonBase, JsonInterfaceSettings, object>> Getters = new Dictionary<MethodInfo, Func<JsonBase, JsonInterfaceSettings, object>>();
+        private static readonly Dictionary<MethodInfo, Action<JsonBase, JsonInterfaceSettings, object>> Setters = new Dictionary<MethodInfo, Action<JsonBase, JsonInterfaceSettings, object>>();
 
         private static bool IsFaulted = false;
         public static readonly List<string> FaultMessages = new List<string>();
 
-        private static void AddGetter(MethodInfo methodInfo, Func<JObject, object> getter)
+        private static void AddGetter(MethodInfo methodInfo, Func<JsonBase, JsonInterfaceSettings, object> getter)
         {
             if (methodInfo != null) Getters.Add(methodInfo, getter);
         }
 
-        private static void AddSetter(MethodInfo methodInfo, Action<JObject, object> setter)
+        private static void AddSetter(MethodInfo methodInfo, Action<JsonBase, JsonInterfaceSettings, object> setter)
         {
             if (methodInfo != null) Setters.Add(methodInfo, setter);
         }
@@ -53,7 +53,7 @@ namespace JsonInterface
                 {
                     var getter = property.GetGetMethod();
                     var setter = property.GetSetMethod();
-                    var propertyName = property.Name.ToCamelCase();
+                    var propertyName = property.Name;
                     var propertyType = property.PropertyType;
 
                     AddGetter(getter, GetGetterFunc(propertyName, propertyType));
@@ -85,14 +85,7 @@ namespace JsonInterface
             (type.IsInterface && typeof(IJsonObject).IsAssignableFrom(type)) ||
             contractResolver.ResolveContract(type) is JsonPrimitiveContract;
 
-        public JsonInterfacePropertyInterceptor(JObject jObject)
-        {
-            if (IsFaulted) throw new Exception($"Fault creating facade object. \n{string.Join("\n", FaultMessages)}");
-
-            var _targetJObject = jObject ?? throw new ArgumentNullException(nameof(jObject));
-        }
-
-        private static Func<JObject, object> GetGetterFunc(string propertyName, Type type)
+        private static Func<JsonBase, JsonInterfaceSettings, object> GetGetterFunc(string propertyName, Type type)
         {
             var genericTypeParameter = type;
 
@@ -101,49 +94,72 @@ namespace JsonInterface
                 .GetMethod(nameof(HandlerFor<object>.GetPropertyValue), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 
             var propertyNameExpression = Expression.Constant(propertyName);
-            var jObjectParameterExpression = Expression.Parameter(typeof(JObject));
+            var jsonBaseParameterExpression = Expression.Parameter(typeof(JsonBase));
+            var jsonInterfaceSettingsExpression = Expression.Parameter(typeof(JsonInterfaceSettings));
 
-            var expression = Expression.Lambda<Func<JObject, object>>(
-                Expression.Convert(Expression.Call(null, method, jObjectParameterExpression, propertyNameExpression), typeof(object)),
-                jObjectParameterExpression);
+            var expression = Expression.Lambda<Func<JsonBase, JsonInterfaceSettings, object>>(
+                Expression.Convert(Expression.Call(null, method,
+                    jsonBaseParameterExpression,
+                    propertyNameExpression,
+                    jsonInterfaceSettingsExpression), typeof(object)),
+                jsonBaseParameterExpression,
+                jsonInterfaceSettingsExpression);
 
             var result = expression.Compile();
             return result;
         }
 
-        private static Action<JObject, object> GetSetterFunc(string propertyName, Type type)
+        private static Action<JsonBase, JsonInterfaceSettings, object> GetSetterFunc(string propertyName, Type type)
         {
             var method = typeof(HandlerFor<>)
                 .MakeGenericType(type)
                 .GetMethod(nameof(HandlerFor<object>.SetPropertyValue), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 
             var propertyNameExpression = Expression.Constant(propertyName);
-            var jObjectParameterExpression = Expression.Parameter(typeof(JObject));
+            var jsonBaseParameterExpression = Expression.Parameter(typeof(JsonBase));
+            var jsonInterfaceSettingsExpression = Expression.Parameter(typeof(JsonInterfaceSettings));
             var valueExpression = Expression.Parameter(typeof(object));
 
-            var expression = Expression.Lambda<Action<JObject, object>>(
-                Expression.Call(null, method, jObjectParameterExpression, propertyNameExpression, Expression.Convert(valueExpression, type)),
-                jObjectParameterExpression,
-                valueExpression);
+            var expression = Expression.Lambda<Action<JsonBase, JsonInterfaceSettings, object>>(
+                    Expression.Call(null, method,
+                        jsonBaseParameterExpression,
+                        propertyNameExpression,
+                        Expression.Convert(valueExpression, type),
+                        jsonInterfaceSettingsExpression),
+                    jsonBaseParameterExpression,
+                    jsonInterfaceSettingsExpression,
+                    valueExpression
+                    );
 
             return expression.Compile();
         }
 
+        public JsonInterfacePropertyInterceptor(JsonInterfaceSettings settings)
+        {
+            if (IsFaulted) throw new Exception($"Fault creating facade object. \n{string.Join("\n", FaultMessages)}");
+
+            var contract = (JsonObjectContract)settings.JsonSerializerSettings.ContractResolver.ResolveContract(typeof(T));
+
+            ObjectPropertyNameToJsonPropertyName = contract.Properties.ToDictionary(v => v.UnderlyingName, v => v.PropertyName);
+        }
+
+        internal readonly Dictionary<string, string> ObjectPropertyNameToJsonPropertyName = new Dictionary<string, string>();
+
         public void Intercept(IInvocation invocation)
         {
-            var targetJObject = (invocation.Proxy as JsonBase).JsonObject;
+            var jsonBase = (invocation.Proxy as JsonBase);
 
             try
             {
                 if (Getters.TryGetValue(invocation.Method, out var getter))
                 {
-                    invocation.ReturnValue = getter(targetJObject);
+                    invocation.ReturnValue = getter(jsonBase, jsonBase.JsonInterfaceSettings);
                     return;
                 }
 
                 if (Setters.TryGetValue(invocation.Method, out var setter))
                 {
-                    setter(targetJObject, invocation.Arguments[0]);
+                    setter(jsonBase, jsonBase.JsonInterfaceSettings, invocation.Arguments[0]);
                     return;
                 }
             }
@@ -152,20 +168,20 @@ namespace JsonInterface
                 var methodName = invocation.Method.Name;
                 if (methodName.IndexOf("_") == 3)
                 {
-                    methodName = methodName.Substring(4).ToCamelCase();
+                    methodName = jsonBase.GetJsonPropertyNameFromPropertyName(methodName.Substring(4));
                 }
 
-                throw new JsonInterfaceException(ex.Message, targetJObject.Path + "." + methodName, ex);
+                throw new JsonInterfaceException(ex.Message, jsonBase.JsonObject.Path + "." + methodName, ex);
             }
 
             switch (invocation.Method.Name)
             {
                 case "set_" + nameof(IJsonObject.JsonObject):
                     var value = (JObject)invocation.Arguments[0];
-                    (invocation.Proxy as JsonBase).JsonObject = value;
+                    jsonBase.JsonObject = value;
                     return;
                 case "get_" + nameof(IJsonObject.JsonObject):
-                    invocation.ReturnValue = targetJObject;
+                    invocation.ReturnValue = jsonBase.JsonObject;
                     return;
             }
         }

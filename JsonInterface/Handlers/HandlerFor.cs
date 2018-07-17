@@ -22,60 +22,56 @@ namespace JsonInterface.Handlers
                     }
                     var arrayElementType = arrayType.GetGenericArguments()[0];
 
-                    var handlers = GetHandlersForType(arrayElementType);
-
-                    var elementReadJsonTypeHandler = handlers[0];
-                    var elementWriteJsonTypeHandler = handlers[1];
-
                     // is array
-                    ReadJsonTypeHandler = (IReadJsonTypeHandler<T>)Activator
+                    _readJsonTypeHandler = (IReadJsonTypeHandler<T>)Activator
                         .CreateInstance(typeof(ArrayTypeHandler<,>)
-                        .MakeGenericType(arrayType, arrayElementType),
-                        elementReadJsonTypeHandler,
-                        elementWriteJsonTypeHandler
+                        .MakeGenericType(arrayType, arrayElementType)
                         );
-                    WriteJsonTypeHandler = new WritingNotSupportedTypeHandler<T>();
+
+                    _writeJsonTypeHandler = new WritingNotSupportedTypeHandler<T>();
                 }
                 else if (typeof(IJsonObject).IsAssignableFrom(typeof(T)))
                 {
                     // is object
-                    ReadJsonTypeHandler = (IReadJsonTypeHandler<T>)Activator.CreateInstance(typeof(ObjectTypeHandler<>).MakeGenericType(typeof(T)));
-                    WriteJsonTypeHandler = new WritingNotSupportedTypeHandler<T>();
+                    _readJsonTypeHandler = (IReadJsonTypeHandler<T>)Activator.CreateInstance(typeof(ObjectTypeHandler<>).MakeGenericType(typeof(T)));
+                    _writeJsonTypeHandler = new WritingNotSupportedTypeHandler<T>();
                 }
                 else
                 {
                     // use primitive handlers (verify elsewhere that this is a valid primitive type)
                     var typeHandler = new PrimitiveTypeHandler<T>();
-                    ReadJsonTypeHandler = typeHandler;
-                    WriteJsonTypeHandler = typeHandler;
+                    _readJsonTypeHandler = typeHandler;
+                    _writeJsonTypeHandler = typeHandler;
                 }
             }
             catch (Exception ex)
             {
                 var faultException = new FaultedTypeHander<T>.TypeHandlerFaultException(ex.Message, ex);
                 var typeHandler = new FaultedTypeHander<T>(faultException);
-                ReadJsonTypeHandler = typeHandler;
-                WriteJsonTypeHandler = typeHandler;
+
+                _readJsonTypeHandler = typeHandler;
+                _writeJsonTypeHandler = typeHandler;
             }
+
+            _exceptionCatchingHandler = new ExceptionCatchingHandler<T>(
+                _readJsonTypeHandler,
+                _writeJsonTypeHandler);
         }
 
-        private static object[] GetHandlersForType(Type type)
-        {
-            var handlerType = typeof(HandlerFor<>)
-                 .MakeGenericType(type);
+        private static ExceptionCatchingHandler<T> _exceptionCatchingHandler;
+        private static IReadJsonTypeHandler<T> _readJsonTypeHandler;
+        private static IWriteJsonTypeHandler<T> _writeJsonTypeHandler;
 
-            var readHandler = handlerType.GetProperty(nameof(ReadJsonTypeHandler), BindingFlags.Static | BindingFlags.Public)
-                .GetValue(null);
+        public static IReadJsonTypeHandler<T> GetReadJsonTypeHandler(JsonInterfaceSettings settings) =>
+            settings.TrapExceptions ? _exceptionCatchingHandler : _readJsonTypeHandler;
 
-            var writeHandler = handlerType.GetProperty(nameof(WriteJsonTypeHandler), BindingFlags.Static | BindingFlags.Public)
-                .GetValue(null);
+        public static IWriteJsonTypeHandler<T> GetWriteJsonTypeHandler(JsonInterfaceSettings settings) =>
+            settings.TrapExceptions ? _exceptionCatchingHandler : _writeJsonTypeHandler;
 
-            return new[] { readHandler, writeHandler };
-        }
+        public static T GetPropertyValue(JsonBase jsonBase, string propertyName, JsonInterfaceSettings settings) =>
+            GetReadJsonTypeHandler(settings).GetPropertyValue(jsonBase, propertyName, settings);
 
-        public static IReadJsonTypeHandler<T> ReadJsonTypeHandler { get; }
-        public static IWriteJsonTypeHandler<T> WriteJsonTypeHandler { get; }
-        public static T GetPropertyValue(JObject jObject, string propertyName) => ReadJsonTypeHandler.GetPropertyValue(jObject, propertyName);
-        public static void SetPropertyValue(JObject jObject, string propertyName, T value) => WriteJsonTypeHandler.SetPropertyValue(jObject, propertyName, value);
+        public static void SetPropertyValue(JsonBase jsonBase, string propertyName, T value, JsonInterfaceSettings settings) =>
+            GetWriteJsonTypeHandler(settings).SetPropertyValue(jsonBase, propertyName, value, settings);
     }
 }

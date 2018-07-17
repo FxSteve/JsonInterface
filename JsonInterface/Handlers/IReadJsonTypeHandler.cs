@@ -7,11 +7,12 @@ namespace JsonInterface.Handlers
 {
     internal interface IReadJsonTypeHandler<T>
     {
-        T GetPropertyValue(JObject jObject, string propertyName);
+        T GetPropertyValue(JsonBase jsonBase, string propertyName, JsonInterfaceSettings settings);
 
-        T FromToken(JToken token);
+        T FromToken(JToken token, JsonInterfaceSettings settings);
 
-        JToken ToToken(T value);
+        JToken ToToken(T value, JsonInterfaceSettings settings);
 
+        void ThrowIfFaulted();
     }
 }

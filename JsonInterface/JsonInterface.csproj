@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Attributes\" />
+    <None Remove="_site\**" />
+    <None Remove="api\**" />
+    <None Remove="articles\**" />
+    <None Remove="log.txt" />
+    <None Remove="*.yml" />
   </ItemGroup>
 </Project>
