@@ -7,7 +7,7 @@ namespace JsonInterface.Handlers
 {
     internal interface IWriteJsonTypeHandler<T>
     {
-        void SetPropertyValue(JObject jObject, string propertyName, T value);
+        void SetPropertyValue(JsonBase jsonBase, string propertyName, T value);
 
     }
 }

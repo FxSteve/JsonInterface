@@ -29,7 +29,7 @@ namespace JsonInterface.PublicTests
         public void ToStringReturnsValidJsonTest()
         {
             var testGuid = Guid.NewGuid();
-            var myJson = JsonInterfaceFactory.Create<IMyObject>(v => v.MyName = "Earl");
+            var myJson = (new JsonInterfaceFactory()).Create<IMyObject>(v => v.MyName = "Earl");
 
             myJson.MyNumber = 99;
             myJson.MyEmbeddedObject.MyGuid = testGuid;

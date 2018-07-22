@@ -20,12 +20,14 @@ namespace JsonInterface.Handlers
         {
             _faultException = ex ?? throw new Exception("No exception specified for fault exception");
         }
-        public T FromToken(JToken token) => throw _faultException;
+        public T FromToken(JToken token, JsonBase jsonBase) => throw _faultException;
 
-        public T GetPropertyValue(JObject jObject, string propertyName) => throw _faultException;
+        public T GetPropertyValue(JsonBase jsonBase, string propertyName) => throw _faultException;
 
-        public void SetPropertyValue(JObject jObject, string propertyName, T value) => throw _faultException;
+        public void SetPropertyValue(JsonBase jsonBase, string propertyName, T value) => throw _faultException;
 
-        public JToken ToToken(T value) => throw _faultException;
+        public JToken ToToken(T value, JsonBase jsonBase) => throw _faultException;
+
+        public void ThrowIfFaulted() => throw _faultException;
     }
 }

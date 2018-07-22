@@ -9,7 +9,6 @@ namespace JsonInterface.Handlers
     internal class PrimitiveTypeHandler<T> : IReadJsonTypeHandler<T>, IWriteJsonTypeHandler<T>
     {
         private readonly T nullValue = default(T);
-        private readonly static bool IsFaulted = false;
         private readonly static Exception FaultException;
 
         static PrimitiveTypeHandler()
@@ -25,20 +24,23 @@ namespace JsonInterface.Handlers
             }
         }
 
-        public T FromToken(JToken token)
+        public static bool IsFaulted { get; set; } = false;
+        public void ThrowIfFaulted() { if (IsFaulted) throw FaultException; }
+
+        public T FromToken(JToken token, JsonBase jsonBase)
         {
             if (IsFaulted) throw FaultException;
 
             return token == null ? nullValue : token.ToObject<T>();
         }
 
-        public T GetPropertyValue(JObject jObject, string propertyName) =>
-            FromToken(jObject[propertyName.ToCamelCase()]);
+        public T GetPropertyValue(JsonBase jsonBase, string propertyName) =>
+            FromToken(jsonBase.JsonObject[jsonBase.GetJsonPropertyNameFromPropertyName(propertyName)], jsonBase);
 
-        public void SetPropertyValue(JObject jObject, string propertyName, T value) =>
-            jObject.ForceGetValuePropertyToken(propertyName.ToCamelCase()).Value = value;
+        public void SetPropertyValue(JsonBase jsonBase, string propertyName, T value) =>
+            jsonBase.ForceGetValuePropertyToken(propertyName).Value = value;
 
-        public JToken ToToken(T value) =>
+        public JToken ToToken(T value, JsonBase jsonBase) =>
             new JValue(value);
     }
 }

@@ -9,21 +9,14 @@ namespace JsonInterface.Handlers
     internal class ArrayTypeHandler<T, V> : IReadJsonTypeHandler<T>
         where T : class
     {
-        readonly IReadJsonTypeHandler<V> _readJsonTypeHandler;
-        readonly IWriteJsonTypeHandler<V> _writeJsonTypeHandler;
+        public T FromToken(JToken token, JsonBase jsonBase) =>
+           new JsonArrayListWrapper<V>(token.ToTokenTypeOrEmptyObject<JArray>(), jsonBase) as T;
 
-        public ArrayTypeHandler(IReadJsonTypeHandler<V> readJsonTypeHandler, IWriteJsonTypeHandler<V> writeJsonTypeHandler)
-        {
-            _readJsonTypeHandler = readJsonTypeHandler ?? throw new ArgumentNullException(nameof(readJsonTypeHandler));
-            _writeJsonTypeHandler = writeJsonTypeHandler;
-        }
+        public JToken ToToken(T value, JsonBase jsonBase) => (value as IJsonList)?.JsonArray ?? new JArray();
 
-        public T FromToken(JToken token) =>
-           new JArrayListWrapper<V>(token.ToTokenTypeOrEmptyObject<JArray>(), _readJsonTypeHandler, _writeJsonTypeHandler) as T;
+        public T GetPropertyValue(JsonBase jsonBase, string propertyName) =>
+            FromToken(jsonBase.ForceGetArrayPropertyToken(propertyName), jsonBase);
 
-        public JToken ToToken(T value) => (value as IJsonList)?.JsonArray ?? new JArray();
-
-        public T GetPropertyValue(JObject jObject, string propertyName) =>
-            FromToken(jObject.ForceGetArrayPropertyToken(propertyName));
+        public void ThrowIfFaulted() { }
     }
 }

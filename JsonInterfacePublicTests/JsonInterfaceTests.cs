@@ -38,7 +38,7 @@ namespace JsonInterface.PublicTests
         {
             var jsonObject = JObject.Parse("{}");
 
-            var tester = JsonInterfaceFactory.Create<ITestInterface>(jsonObject);
+            var tester = (new JsonInterfaceFactory(_serializerSettings)).Create<ITestInterface>(jsonObject);
 
             tester.Name = "Morris";
 
@@ -53,7 +53,7 @@ namespace JsonInterface.PublicTests
             tester.Names.Add("Ho");
             tester.Names.Add("Go");
 
-            tester.Elements.Add(JsonInterfaceFactory.Create<ITestElement>(v =>
+            tester.Elements.Add((new JsonInterfaceFactory()).Create<ITestElement>(v =>
            {
                v.Something = "some value";
                v.Value = 88;
@@ -78,7 +78,7 @@ namespace JsonInterface.PublicTests
 
             try
             {
-                var badType = JsonInterfaceFactory.Create<IHaveNonNullableValueTypes>();
+                var badType = (new JsonInterfaceFactory()).Create<IHaveNonNullableValueTypes>();
                 var badTypePropertyResult = badType.BadType;
             }
             catch (JsonInterfaceException)
@@ -102,7 +102,7 @@ namespace JsonInterface.PublicTests
 
             try
             {
-                var badType = JsonInterfaceFactory.Create<IHasPath>();
+                var badType = (new JsonInterfaceFactory(_serializerSettings)).Create<IHasPath>();
                 var badTypePropertyResult = badType.Child.Child.Child.HaveNonNullableValueTypes.BadType;
             }
             catch (JsonInterfaceException ex)
@@ -112,6 +112,37 @@ namespace JsonInterface.PublicTests
             }
 
             Assert.IsTrue(wasCaught);
+        }
+
+        public interface IHasRecursivePath : IJsonObject
+        {
+            IHasRecursivePath Child { get; set; }
+        }
+
+        [TestMethod]
+        public void ChildPropertyUsesParentSerializerSettings()
+        {
+            var recursivePath = (new JsonInterfaceFactory(_serializerSettings)).Create<IHasRecursivePath>();
+
+            var propertyResult = recursivePath.Child.Child;
+
+            Assert.AreEqual("child.child", propertyResult.JsonObject.Path);
+        }
+
+        public interface IHasRecursiveArrayPath : IJsonObject
+        {
+            IJsonList<IHasRecursiveArrayPath> Child { get; set; }
+        }
+
+        [TestMethod]
+        public void ChildArrayUsesParentSerializerSettings()
+        {
+            var recursivePath = (new JsonInterfaceFactory(_serializerSettings)).Create<IHasRecursiveArrayPath>();
+            recursivePath.Child.AddNew();
+
+            var propertyResult = recursivePath.Child.AddNew().Child.AddNew();
+
+            Assert.AreEqual("child[1].child[0]", propertyResult.JsonObject.Path);
         }
 
         public interface IHaveDisallowedTypes : IJsonObject
