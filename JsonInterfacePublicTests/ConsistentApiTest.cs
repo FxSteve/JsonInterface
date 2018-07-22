@@ -102,6 +102,31 @@ namespace JsonInterface.PublicTests
         }
 
         [TestMethod]
+        public void ListAddRangeTest()
+        {
+            var factoryPlain = new JsonInterfaceFactory();
+            var list1 = factoryPlain.CreateList<int?>();
+            list1.AddRange(new int?[] { 5, 6, 7, 8 });
+            Assert.AreEqual("[5,6,7,8]", list1.ToString().RemoveWhitespace());
+
+            var list2 = factoryPlain.CreateList<IPrimitives>();
+            list2.AddRange(new[] {
+                factoryPlain.Create<IPrimitives>(v=> v.Decimal = 21),
+                factoryPlain.Create<IPrimitives>(v=> v.Decimal = 33)
+            });
+            Assert.AreEqual("[{\"Decimal\":21.0},{\"Decimal\":33.0}]", list2.ToString().RemoveWhitespace());
+
+            var list3 = factoryPlain.CreateList<IJsonList<IPrimitives>>();
+            list3.AddRange(new[]
+            {
+                factoryPlain.CreateList<IPrimitives>(v=> v.AddRange(list2)),
+                factoryPlain.CreateList<IPrimitives>(v=> v.AddRange(list2))
+            });
+
+            Assert.AreEqual("[[{\"Decimal\":21.0},{\"Decimal\":33.0}],[{\"Decimal\":21.0},{\"Decimal\":33.0}]]", list3.ToString().RemoveWhitespace());
+        }
+
+        [TestMethod]
         public void ConsistentApiTestConstructors()
         {
             var factory1 = new JsonInterfaceFactory();

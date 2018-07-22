@@ -3,11 +3,31 @@ C# strongly-typed interfaces for json objects
 
 ---
 
-JsonInterface is a high-performance interface builder that enables interaction with a json object.  The intended goal is to allow interaction with a portion of a json object without knowledge or modification of the remainder of the object.
+**JsonInterface** is a high-performance interface builder that enables interaction with a json object.  The intended goal is to allow interaction with a portion of a json object without knowledge or modification of the remainder of the object.
+
+**Caveat:** All types used in these interfaces are nullable.  In the interest of simplifying usage, reading a property of type object or list has the side effect of causing an empty object or list to be created.
 
 The heavy lifting is done by Newtonsoft's Json component and Castle Dynamic Proxy.
 
-# Getting Started.
+---
+
+## Sample Code
+
+Once you create your compatible interface definition (see below), create a new instance of the interface by
+```
+var factory = new JsonInterfaceFactory();
+var myInterface = factory.Create<IMyJsonObject>();
+
+myInterface.MyIntValue = 33;
+myInterface.OtherObject.Name = "Other Object";
+var myList = myInterface.MyListOfInts;
+myList.Add(34);
+
+```
+
+---
+
+# Principles
 
 The json specification defines 6 types.  For the purposes of JsonInterface, these distill into 3 types.  
   1.  Primitive types
@@ -34,18 +54,26 @@ public interface IMyJsonObject : IJsonObject
   IJsonList<IMyListItem> MyListOfItems { get; set; }
   IJsonList<IJsonList<IMyChildListItem>> MyListOfList { get; set; }
 }
+
+public interface IMyOtherJsonObject : IJsonObject 
+{
+
+}
+
+public interface IMyListItem : IJsonObject
+{
+	string Name { get; set; }
+}
+
+public interface IMyChildListItem : IJsonObject 
+{
+	string Name { get; set; }
+}
 ```
 
 ## Arrays/Lists (`IJsonList<T>`)
 
-Arrays are lists of a primitive type, objects of a type, or arrays of a type.  All items in a list must be the same type, or the related value might be null or throw an exception.
+Arrays are lists of a primitive type, objects of a type, or arrays of a type.  All items in a list must be the same type, or the related value might appear to be null or throw an exception depending on the TrapExceptions config setting and the action.
 
----
 
-Once you create your compatible interface definition, create a new instance of the interface by
-```
-var myInterface = JsonInterfaceFactory.Create<IMyJsonObject>();
-```
-
-...
 
