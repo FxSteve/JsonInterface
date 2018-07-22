@@ -10,6 +10,20 @@ namespace JsonInterface
     public static class JsonInterfaceExtensions
     {
         /// <summary>
+        /// Add set of items to list
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="jsonList"></param>
+        /// <param name="items"></param>
+        public static void AddRange<T>(this IJsonList<T> jsonList, IEnumerable<T> items)
+        {
+            foreach (var item in items)
+            {
+                jsonList.Add(item);
+            }
+        }   
+        
+        /// <summary>
         /// Add a new object to the list of objects and initialize it
         /// </summary>
         /// <typeparam name="T"></typeparam>
