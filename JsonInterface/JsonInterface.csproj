@@ -2,10 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <Version>1.0.4</Version>
+    <Version>1.5.0</Version>
     <PackageLicenseUrl>https://github.com/FxSteve/JsonInterface/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/FxSteve/JsonInterface</PackageProjectUrl>
     <RepositoryUrl>https://github.com/FxSteve/JsonInterface</RepositoryUrl>
+    <PackageReleaseNotes>Breaking changes.  Moved from a static factory to an instance-based factory.</PackageReleaseNotes>
+    <Description>JsonInterface is a high-performance interface builder that enables interaction
+    with a json object.  The design goal is to allow interaction with a portion of a json object
+    without knowing about or modification of the remainder of the object.</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -22,20 +22,18 @@ namespace JsonInterface
         private T GetDynamicProxy<T>(JObject jObject)
             where T : class, IJsonObject
         {
-            _settings = _settings.DefaultIfNull();
-
-            var propertyInterceptor = new JsonInterfacePropertyInterceptor<T>(_settings);
+            var propertyInterceptor = new JsonInterfacePropertyInterceptor<T>(Settings);
             var proxy = proxyGenerator
                 .CreateInterfaceProxyWithoutTarget<T>(generationOptions, propertyInterceptor);
 
             var jsonBase = proxy as JsonBase;
             jsonBase.Factory = this;
             jsonBase.JsonObject = jObject;
-            jsonBase.JsonInterfaceSettings = _settings;
+            jsonBase.JsonInterfaceSettings = Settings;
             jsonBase.ObjectPropertyNameToJsonPropertyName = propertyInterceptor.ObjectPropertyNameToJsonPropertyName;
             return proxy;
         }
-        
+
         /// <summary>
         /// New interface factory with all the defaults
         /// </summary>
@@ -52,7 +50,8 @@ namespace JsonInterface
         {
             var interfaceSettings = new JsonInterfaceSettings
             {
-                JsonSerializerSettings = settings
+                JsonSerializerSettings = settings,
+                TrapExceptions = trapExceptions
             };
 
             Initialize(interfaceSettings);
@@ -67,11 +66,20 @@ namespace JsonInterface
 
         private void Initialize(JsonInterfaceSettings jsonInterfaceSettings)
         {
-            _settings = jsonInterfaceSettings.DefaultIfNull();
+            Settings = jsonInterfaceSettings;
         }
 
+        /// <summary>
+        /// Get settings for factory.  Settings should be passed in via the factory constructor
+        /// and remain unchanged for the life of the object
+        /// </summary>
+        public JsonInterfaceSettings Settings
+        {
+            get => _settings.DefaultIfNull();
+            private set => _settings = value.DefaultIfNull();
+        }
         private JsonInterfaceSettings _settings;
-        
+
         /// <summary>
         /// Create a new json interface, using a json string to initialize the object
         /// </summary>
@@ -81,11 +89,9 @@ namespace JsonInterface
         public T Create<T>(string json)
             where T : class, IJsonObject
         {
-            _settings = _settings.DefaultIfNull();
-
             return Create<T>(JsonConvert.DeserializeObject<JObject>(
                     json,
-                    _settings.JsonSerializerSettings));
+                    Settings.JsonSerializerSettings));
         }
 
         /// <summary>
@@ -131,7 +137,7 @@ namespace JsonInterface
         public IJsonList<T> CreateList<T>(string json) =>
             CreateList<T>(JsonConvert.DeserializeObject<JArray>(
                 json,
-                _settings.DefaultIfNull().JsonSerializerSettings));
+                Settings.JsonSerializerSettings));
 
         /// <summary>
         /// Create a new json interface, with an empty json object
@@ -150,8 +156,8 @@ namespace JsonInterface
         public IJsonList<T> CreateList<T>(JArray jArray) =>
             new JsonArrayListWrapper<T>(jArray, new JsonBase
             {
-                 JsonInterfaceSettings= _settings,
-                 Factory = this
+                JsonInterfaceSettings = Settings,
+                Factory = this
             });
 
         /// <summary>
