@@ -44,20 +44,33 @@ Primitive types encapulates the json types of string, number, boolean, and null 
 
 ## Objects (`IJsonObject`)
 
-Objects in JsonInterface refers to an interface that inherits from IJsonObject.
+Objects in JsonInterface refers to an interface that inherits from IJsonObject.  JsonInterface creates a proxy that implements the interface properties.
 ```
 public interface IMyJsonObject : IJsonObject 
 {
   int? MyIntValue { get; set; }
-  IMyOtherJsonObject OtherObject { get; set; }
   IJsonList<int?> MyListOfInts { get; set; }
-  IJsonList<IMyListItem> MyListOfItems { get; set; }
-  IJsonList<IJsonList<IMyChildListItem>> MyListOfList { get; set; }
+  IMyOtherJsonObject OtherObject { get; set; }
 }
 
 public interface IMyOtherJsonObject : IJsonObject 
 {
+  string Name { get; set; }
+}
 
+```
+
+## Arrays/Lists (`IJsonList<T>`)
+
+Arrays are lists of a primitive type, objects of a type, or arrays of a type.  All items in a list must be the same type, or the related value might appear to be null or throw an exception depending on the TrapExceptions config setting and the action.
+As with IJsonObject, JsonInterface creates a proxy object that implements the specified interface.
+
+```
+public interface IMyJsonObjectWithLists : IJsonObject 
+{
+  IJsonList<int?> MyListOfInts { get; set; }
+  IJsonList<IMyListItem> MyListOfItems { get; set; }
+  IJsonList<IJsonList<IMyChildListItem>> MyListOfList { get; set; }
 }
 
 public interface IMyListItem : IJsonObject
@@ -71,9 +84,9 @@ public interface IMyChildListItem : IJsonObject
 }
 ```
 
-## Arrays/Lists (`IJsonList<T>`)
+## Serializer Settings
 
-Arrays are lists of a primitive type, objects of a type, or arrays of a type.  All items in a list must be the same type, or the related value might appear to be null or throw an exception depending on the TrapExceptions config setting and the action.
+JsonInterface uses the ContractResolver from Newtonsoft.Json to create the contract between the 
+If JsonSerializerSettings is passed in via the JsonInterfaceFactory constructor, it will be used to define the contract between the interface and the json object.
 
-
-
+By default, JsonInterface uses JsonSerializationSettings from JsonConvert.DefaultSettings to generate the JsonSerializerSettings.

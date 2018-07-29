@@ -14,17 +14,18 @@ namespace JsonInterface
     public class JsonInterfaceFactory
     {
         private static readonly ProxyGenerator proxyGenerator = new ProxyGenerator();
-        private static readonly ProxyGenerationOptions generationOptions = new ProxyGenerationOptions
-        {
-            BaseTypeForInterfaceProxy = typeof(JsonBase)
-        };
 
         private T GetDynamicProxy<T>(JObject jObject)
             where T : class, IJsonObject
         {
+            var generatorOptions = new ProxyGenerationOptions
+            {
+                BaseTypeForInterfaceProxy = Settings.BaseType
+            };
+
             var propertyInterceptor = new JsonInterfacePropertyInterceptor<T>(Settings);
             var proxy = proxyGenerator
-                .CreateInterfaceProxyWithoutTarget<T>(generationOptions, propertyInterceptor);
+                .CreateInterfaceProxyWithoutTarget<T>(generatorOptions, propertyInterceptor);
 
             var jsonBase = proxy as JsonBase;
             jsonBase.Factory = this;

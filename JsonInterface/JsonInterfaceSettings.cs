@@ -26,6 +26,27 @@ namespace JsonInterface
         /// </summary>
         public JsonSerializerSettings JsonSerializerSettings { get; set; } = GetJsonSerializerSettings();
 
+        private Type _baseType = typeof(JsonBase);
+
+        /// <summary>
+        /// Base type for proxies.  Must inherit from JsonBase
+        /// </summary>
+        public Type BaseType
+        {
+            get => _baseType;
+            set
+            {
+                if (typeof(JsonBase).IsAssignableFrom(value))
+                {
+                    _baseType = value;
+                }
+                else
+                {
+                    throw new ArgumentException(nameof(BaseType), $"Type must inherit from {nameof(JsonBase)}");
+                }
+            }
+        }
+
         /// <summary>
         /// Default JsonInterface settings
         /// </summary>
