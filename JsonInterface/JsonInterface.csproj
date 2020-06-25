@@ -10,7 +10,15 @@
     <Description>JsonInterface is a high-performance interface builder that enables interaction
     with a json object.  The design goal is to allow interaction with a portion of a json object
     without knowing about or modification of the remainder of the object.</Description>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DocumentationFile>bin\Debug\netcoreapp2.0\JsonInterface.xml</DocumentationFile>
